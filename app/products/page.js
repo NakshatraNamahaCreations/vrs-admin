@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { HiOutlineMagnifyingGlass, HiPlus, HiOutlineTrash, HiOutlinePencilSquare } from "react-icons/hi2";
+import { useEffect, useMemo, useState } from "react";
+import { HiOutlineMagnifyingGlass, HiPlus, HiOutlineTrash, HiOutlinePencilSquare, HiOutlineEye, HiOutlineCheckBadge } from "react-icons/hi2";
 import Shell from "../components/Shell";
 import ImageDropzone from "../components/ImageDropzone";
 import MultiImageDropzone from "../components/MultiImageDropzone";
@@ -37,6 +37,16 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [viewing, setViewing] = useState(null); // full product doc when the view drawer is open
+  // "picking" (default) → dropdown of existing categories.
+  // "new"                → free-text input for a brand-new category name.
+  const [categoryMode, setCategoryMode] = useState("picking");
+
+  const categories = useMemo(() => {
+    const set = new Set();
+    items.forEach((p) => p.category && set.add(p.category));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [items]);
 
   const load = async () => {
     setLoading(true);
@@ -50,7 +60,14 @@ export default function ProductsPage() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
-  const openNew = () => { setEditing(null); setForm(empty); setShowForm(true); };
+  const openNew = () => {
+    setEditing(null);
+    setForm(empty);
+    // If no categories exist yet, force new-category mode so the admin has an
+    // input to type in — otherwise the dropdown would be empty and unusable.
+    setCategoryMode(categories.length === 0 ? "new" : "picking");
+    setShowForm(true);
+  };
   const openEdit = (p) => {
     setEditing(p._id);
     setForm({
@@ -64,6 +81,7 @@ export default function ProductsPage() {
       description: p.description || "",
       features: Array.isArray(p.features) ? p.features.join("\n") : "",
     });
+    setCategoryMode("picking");
     setShowForm(true);
   };
 
@@ -184,10 +202,13 @@ export default function ProductsPage() {
                       </span>
                     </td>
                     <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button className={common.dangerBtn} onClick={() => openEdit(p)} style={{ color: "var(--brand-700)" }}>
+                      <button className={common.dangerBtn} onClick={() => setViewing(p)} style={{ color: "var(--brand-700)" }} title="View product">
+                        <HiOutlineEye style={{ verticalAlign: "-2px" }} />
+                      </button>
+                      <button className={common.dangerBtn} onClick={() => openEdit(p)} style={{ color: "var(--brand-700)" }} title="Edit product">
                         <HiOutlinePencilSquare style={{ verticalAlign: "-2px" }} />
                       </button>
-                      <button className={common.dangerBtn} onClick={() => remove(p._id)}>
+                      <button className={common.dangerBtn} onClick={() => remove(p._id)} title="Delete product">
                         <HiOutlineTrash style={{ verticalAlign: "-2px" }} />
                       </button>
                     </td>
@@ -213,7 +234,49 @@ export default function ProductsPage() {
             <div className={styles.row}>
               <label>
                 <span>Category</span>
-                <input required value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} />
+                {categoryMode === "picking" ? (
+                  <select
+                    required
+                    value={form.category}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "__new__") {
+                        setForm((f) => ({ ...f, category: "" }));
+                        setCategoryMode("new");
+                      } else {
+                        setForm((f) => ({ ...f, category: v }));
+                      }
+                    }}
+                  >
+                    <option value="" disabled>Select a category…</option>
+                    {categories.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                    <option value="__new__">+ New category…</option>
+                  </select>
+                ) : (
+                  <div className={styles.newCategoryRow}>
+                    <input
+                      required
+                      autoFocus
+                      value={form.category}
+                      onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                      placeholder="New category name"
+                    />
+                    {categories.length > 0 && (
+                      <button
+                        type="button"
+                        className={styles.newCategoryCancel}
+                        onClick={() => {
+                          setForm((f) => ({ ...f, category: "" }));
+                          setCategoryMode("picking");
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                )}
               </label>
             </div>
             <div className={styles.row2}>
@@ -280,6 +343,241 @@ export default function ProductsPage() {
           </form>
         </div>
       )}
+
+      {viewing && (
+        <ProductViewDrawer
+          product={viewing}
+          onClose={() => setViewing(null)}
+          onEdit={() => {
+            const p = viewing;
+            setViewing(null);
+            openEdit(p);
+          }}
+        />
+      )}
     </Shell>
+  );
+}
+
+function formatDate(iso) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("en-IN", {
+      day: "numeric", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  } catch { return "—"; }
+}
+
+function ProductViewDrawer({ product, onClose, onEdit }) {
+  const p = product;
+  const original = Number(p.originalPrice || 0);
+  const price = Number(p.price || 0);
+  const discount = original > price
+    ? Math.round(((original - price) / original) * 100)
+    : 0;
+  const gallery = Array.from(
+    new Set([p.image, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))
+  );
+
+  return (
+    <div className={styles.overlay} onClick={onClose}>
+      <div
+        className={styles.formCard}
+        style={{ maxWidth: 720 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3>Product details</h3>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* Hero image */}
+          {p.image ? (
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                aspectRatio: "4 / 3",
+                background: "#f5fafd",
+                borderRadius: 12,
+                overflow: "hidden",
+                border: "1px solid var(--line)",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={resolveImg(p.image)}
+                alt={p.name}
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              />
+              {discount > 0 && (
+                <span
+                  style={{
+                    position: "absolute", top: 12, left: 12,
+                    background: "var(--danger)", color: "#fff",
+                    padding: "4px 10px", borderRadius: 999,
+                    fontSize: "0.75rem", fontWeight: 700,
+                  }}
+                >
+                  -{discount}%
+                </span>
+              )}
+            </div>
+          ) : (
+            <div
+              style={{
+                width: "100%", aspectRatio: "4 / 3",
+                background: "#f5fafd", borderRadius: 12,
+                border: "1px dashed var(--line)",
+                display: "grid", placeItems: "center", color: "var(--muted)",
+              }}
+            >
+              No image
+            </div>
+          )}
+
+          {/* Gallery */}
+          {gallery.length > 1 && (
+            <section>
+              <b style={{ display: "block", fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 8 }}>
+                Gallery ({gallery.length})
+              </b>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {gallery.map((url, i) => (
+                  <div
+                    key={`${url}-${i}`}
+                    style={{
+                      width: 72, height: 72, borderRadius: 10,
+                      overflow: "hidden", border: "1px solid var(--line)",
+                      background: "#f5fafd",
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={resolveImg(url)}
+                      alt={`${p.name} ${i + 1}`}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Title + meta */}
+          <section>
+            <b style={{ display: "block", fontFamily: "var(--font-display)", fontSize: "1.15rem", marginBottom: 4 }}>
+              {p.name}
+            </b>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", fontSize: "0.8rem" }}>
+              <span className="badge badge-info">{p.category}</span>
+              {p.brand && <span className="badge badge-neutral">{p.brand}</span>}
+              {p.tag && <span className="badge badge-ok">{p.tag}</span>}
+              <span className={`badge ${p.stock > 5 ? "badge-ok" : p.stock > 0 ? "badge-warn" : "badge-danger"}`}>
+                Stock: {p.stock ?? 0}
+              </span>
+              {!p.isActive && <span className="badge badge-danger">Inactive</span>}
+            </div>
+          </section>
+
+          {/* Price block */}
+          <section
+            style={{
+              display: "flex", gap: 14, alignItems: "baseline",
+              padding: "14px 16px", border: "1px solid var(--line)",
+              borderRadius: 12, background: "#f9fcfe",
+            }}
+          >
+            <b style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", color: "var(--ink)" }}>
+              ₹{price.toLocaleString("en-IN")}
+            </b>
+            {original > price && (
+              <>
+                <s style={{ color: "var(--muted)", fontSize: "0.95rem" }}>
+                  ₹{original.toLocaleString("en-IN")}
+                </s>
+                <span style={{ color: "#0f8f6b", fontWeight: 700, fontSize: "0.85rem" }}>
+                  You save ₹{(original - price).toLocaleString("en-IN")}
+                </span>
+              </>
+            )}
+          </section>
+
+          {/* Description */}
+          {p.description && (
+            <section>
+              <b style={{ display: "block", fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 8 }}>
+                Description
+              </b>
+              <p style={{ fontSize: "0.9rem", lineHeight: 1.55, color: "var(--ink)", whiteSpace: "pre-line" }}>
+                {p.description}
+              </p>
+            </section>
+          )}
+
+          {/* Features */}
+          {Array.isArray(p.features) && p.features.length > 0 && (
+            <section>
+              <b style={{ display: "block", fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 8 }}>
+                Key features ({p.features.length})
+              </b>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 6 }}>
+                {p.features.map((f, i) => (
+                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: "0.88rem", color: "var(--ink)" }}>
+                    <HiOutlineCheckBadge style={{ color: "var(--brand-700)", flexShrink: 0, marginTop: 2 }} />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Rating */}
+          {(p.rating > 0 || p.reviewCount > 0) && (
+            <section>
+              <b style={{ display: "block", fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 8 }}>
+                Rating
+              </b>
+              <div style={{ fontSize: "0.9rem" }}>
+                <b style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem" }}>
+                  {Number(p.rating || 0).toFixed(1)} ★
+                </b>
+                <span style={{ color: "var(--muted)", marginLeft: 8 }}>
+                  ({p.reviewCount || 0} {p.reviewCount === 1 ? "review" : "reviews"})
+                </span>
+              </div>
+            </section>
+          )}
+
+          {/* Meta / timestamps */}
+          <section
+            style={{
+              display: "grid", gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 8, fontSize: "0.82rem", color: "var(--ink)",
+              paddingTop: 14, borderTop: "1px solid var(--line)",
+            }}
+          >
+            <span><em style={{ color: "var(--muted)", fontStyle: "normal" }}>Created:</em> {formatDate(p.createdAt)}</span>
+            <span><em style={{ color: "var(--muted)", fontStyle: "normal" }}>Updated:</em> {formatDate(p.updatedAt)}</span>
+            {p.slug && (
+              <span style={{ gridColumn: "1 / -1" }}>
+                <em style={{ color: "var(--muted)", fontStyle: "normal" }}>Slug:</em> <code style={{ background: "rgba(15,127,191,0.08)", color: "var(--brand-700)", padding: "1px 6px", borderRadius: 4, fontSize: "0.75rem" }}>{p.slug}</code>
+              </span>
+            )}
+            {p.image && (
+              <span style={{ gridColumn: "1 / -1", overflowWrap: "anywhere", wordBreak: "break-all" }}>
+                <em style={{ color: "var(--muted)", fontStyle: "normal" }}>Image:</em> <code style={{ background: "rgba(15,127,191,0.08)", color: "var(--brand-700)", padding: "1px 6px", borderRadius: 4, fontSize: "0.72rem" }}>{p.image}</code>
+              </span>
+            )}
+          </section>
+        </div>
+
+        <div className={styles.actions}>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>Close</button>
+          <button type="button" className="btn btn-primary" onClick={onEdit}>
+            <HiOutlinePencilSquare /> Edit
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

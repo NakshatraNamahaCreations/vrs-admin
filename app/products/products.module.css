@@ -46,7 +46,7 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.row input, .row textarea, .row2 input, .row2 select {
+.row input, .row textarea, .row select, .row2 input, .row2 select {
   padding: 11px 12px;
   border: 1px solid rgba(15, 127, 191, 0.2);
   border-radius: 10px;
@@ -56,11 +56,51 @@
   color: var(--ink);
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
 }
-.row input:focus, .row textarea:focus, .row2 input:focus, .row2 select:focus {
+.row input:focus, .row textarea:focus, .row select:focus, .row2 input:focus, .row2 select:focus {
   border-color: var(--brand-500);
   box-shadow: 0 0 0 3px rgba(15, 127, 191, 0.1);
 }
+
+/* Selects get a custom chevron and left-aligned padding for the arrow. The
+   browser's native arrow varies wildly across platforms, so we strip it. */
+.row select, .row2 select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%230f7fbf' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
+}
+.row select:disabled, .row2 select:disabled { cursor: not-allowed; opacity: 0.6; }
+.row select option, .row2 select option { color: var(--ink); }
+
+/* When the category is in "new" mode we render an inline input + Cancel
+   button pair. Keep the button height matched to the input so nothing
+   jumps as the user toggles between modes. */
+.newCategoryRow {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.newCategoryRow input { flex: 1; }
+.newCategoryCancel {
+  padding: 0 14px;
+  border: 1px solid rgba(15, 127, 191, 0.2);
+  background: #f6fbff;
+  color: var(--brand-700);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.newCategoryCancel:hover { background: #eaf3f8; border-color: var(--brand-500); }
 
 .actions {
   display: flex;
