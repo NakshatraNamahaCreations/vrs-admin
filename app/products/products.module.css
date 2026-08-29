@@ -1,0 +1,72 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 27, 48, 0.5);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.formCard {
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 28px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 40px 80px -30px rgba(4, 27, 48, 0.4);
+}
+.formCard > * { min-width: 0; }
+.formCard h3 {
+  font-family: var(--font-display);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.row, .row2 { display: grid; gap: 12px; }
+.row2 { grid-template-columns: 1fr 1fr; }
+@media (max-width: 520px) { .row2 { grid-template-columns: 1fr; } }
+
+.row label, .row2 label { display: flex; flex-direction: column; gap: 6px; }
+.row label > span, .row2 label > span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.row input, .row textarea, .row2 input, .row2 select {
+  padding: 11px 12px;
+  border: 1px solid rgba(15, 127, 191, 0.2);
+  border-radius: 10px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.row input:focus, .row textarea:focus, .row2 input:focus, .row2 select:focus {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px rgba(15, 127, 191, 0.1);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}

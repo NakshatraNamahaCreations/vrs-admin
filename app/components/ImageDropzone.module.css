@@ -1,0 +1,164 @@
+.zone {
+  position: relative;
+  min-height: 180px;
+  border: 2px dashed rgba(15, 127, 191, 0.28);
+  border-radius: 14px;
+  background:
+    radial-gradient(400px 200px at 100% 0%, rgba(20, 201, 161, 0.08), transparent 60%),
+    linear-gradient(160deg, #f7fbfe, #ffffff);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+}
+.zone:hover:not(.disabled):not(.hasPreview) {
+  border-color: var(--brand-500);
+  background:
+    radial-gradient(400px 200px at 100% 0%, rgba(20, 201, 161, 0.14), transparent 60%),
+    linear-gradient(160deg, #eaf3f8, #ffffff);
+}
+.dragging {
+  border-color: var(--brand-500) !important;
+  background:
+    radial-gradient(400px 200px at 100% 0%, rgba(20, 201, 161, 0.2), transparent 60%),
+    linear-gradient(160deg, #d9f0fb, #ffffff) !important;
+  transform: scale(1.005);
+}
+.disabled { opacity: 0.6; cursor: not-allowed; }
+.hasPreview {
+  padding: 0;
+  min-height: 220px;
+  border-style: solid;
+  border-color: var(--line);
+}
+
+.placeholder {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+}
+.icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eaf3f8, #d9f0fb);
+  color: var(--brand-700);
+  display: grid;
+  place-items: center;
+  font-size: 1.7rem;
+  margin-bottom: 6px;
+  border: 1px solid rgba(15, 127, 191, 0.15);
+}
+.placeholder b {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.placeholder em {
+  color: var(--muted);
+  font-style: normal;
+  font-size: 0.78rem;
+}
+
+.previewWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #f5fafd;
+}
+.preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(4, 27, 48, 0), rgba(4, 27, 48, 0.55));
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.previewWrap:hover .overlay { opacity: 1; }
+
+.removeBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(224, 82, 82, 0.95);
+  color: #fff;
+  border: none;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 8px 18px -8px rgba(224, 82, 82, 0.7);
+  transition: transform 0.2s ease, background 0.2s ease;
+  z-index: 2;
+}
+.removeBtn:hover { background: #c14242; transform: scale(1.06); }
+.removeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.progressWrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8px 14px;
+  background: rgba(4, 27, 48, 0.8);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.progressBar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, var(--brand-500), var(--accent));
+  opacity: 0.25;
+  transition: width 0.2s ease;
+}
+.progressWrap span { position: relative; z-index: 1; margin-left: auto; }
+
+.error {
+  color: var(--danger);
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+.pathHint {
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin-top: 8px;
+  /* Cloudinary URLs are one long token — allow the browser to break anywhere
+     so the modal doesn't get pushed wider than its max-width. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.pathHint code {
+  background: rgba(15, 127, 191, 0.08);
+  color: var(--brand-700);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
