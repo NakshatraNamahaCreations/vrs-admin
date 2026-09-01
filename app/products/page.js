@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { HiOutlineMagnifyingGlass, HiPlus, HiOutlineTrash, HiOutlinePencilSquare, HiOutlineEye, HiOutlineCheckBadge } from "react-icons/hi2";
 import Shell from "../components/Shell";
 import ImageDropzone from "../components/ImageDropzone";
@@ -38,15 +38,7 @@ export default function ProductsPage() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [viewing, setViewing] = useState(null); // full product doc when the view drawer is open
-  // "picking" (default) → dropdown of existing categories.
-  // "new"                → free-text input for a brand-new category name.
-  const [categoryMode, setCategoryMode] = useState("picking");
-
-  const categories = useMemo(() => {
-    const set = new Set();
-    items.forEach((p) => p.category && set.add(p.category));
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [items]);
+  const [categories, setCategories] = useState([]); // fetched from /api/admin/categories
 
   const load = async () => {
     setLoading(true);
@@ -58,14 +50,28 @@ export default function ProductsPage() {
     }
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+  const loadCategories = async () => {
+    try {
+      const res = await api(`/api/admin/categories`);
+      setCategories(
+        (res.items || [])
+          .filter((c) => c?.name)
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name))
+      );
+    } catch {
+      setCategories([]);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    loadCategories();
+    // eslint-disable-next-line
+  }, []);
 
   const openNew = () => {
     setEditing(null);
     setForm(empty);
-    // If no categories exist yet, force new-category mode so the admin has an
-    // input to type in — otherwise the dropdown would be empty and unusable.
-    setCategoryMode(categories.length === 0 ? "new" : "picking");
     setShowForm(true);
   };
   const openEdit = (p) => {
@@ -81,7 +87,6 @@ export default function ProductsPage() {
       description: p.description || "",
       features: Array.isArray(p.features) ? p.features.join("\n") : "",
     });
-    setCategoryMode("picking");
     setShowForm(true);
   };
 
@@ -234,48 +239,25 @@ export default function ProductsPage() {
             <div className={styles.row}>
               <label>
                 <span>Category</span>
-                {categoryMode === "picking" ? (
-                  <select
-                    required
-                    value={form.category}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (v === "__new__") {
-                        setForm((f) => ({ ...f, category: "" }));
-                        setCategoryMode("new");
-                      } else {
-                        setForm((f) => ({ ...f, category: v }));
-                      }
-                    }}
-                  >
-                    <option value="" disabled>Select a category…</option>
-                    {categories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                    <option value="__new__">+ New category…</option>
-                  </select>
-                ) : (
-                  <div className={styles.newCategoryRow}>
-                    <input
-                      required
-                      autoFocus
-                      value={form.category}
-                      onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                      placeholder="New category name"
-                    />
-                    {categories.length > 0 && (
-                      <button
-                        type="button"
-                        className={styles.newCategoryCancel}
-                        onClick={() => {
-                          setForm((f) => ({ ...f, category: "" }));
-                          setCategoryMode("picking");
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    )}
-                  </div>
+                <select
+                  required
+                  value={form.category}
+                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                  disabled={categories.length === 0}
+                >
+                  <option value="" disabled>
+                    {categories.length === 0 ? "No categories yet — add one in Categories" : "Select a category…"}
+                  </option>
+                  {categories.map((c) => (
+                    <option key={c._id || c.name} value={c.name}>
+                      {c.name.toLowerCase()}
+                    </option>
+                  ))}
+                </select>
+                {categories.length === 0 && (
+                  <em style={{ color: "var(--muted)", fontSize: 12, fontStyle: "normal", marginTop: 6 }}>
+                    Head to the Categories page to add one first.
+                  </em>
                 )}
               </label>
             </div>

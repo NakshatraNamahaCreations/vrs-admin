@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   HiOutlineSquares2X2,
   HiOutlineCube,
+  HiOutlineRectangleGroup,
   HiOutlineUsers,
   HiOutlineShoppingBag,
   HiOutlineChatBubbleLeftRight,
@@ -17,6 +18,7 @@ import styles from "./Shell.module.css";
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: <HiOutlineSquares2X2 /> },
   { href: "/products", label: "Products", icon: <HiOutlineCube /> },
+  { href: "/categories", label: "Categories", icon: <HiOutlineRectangleGroup /> },
   { href: "/customers", label: "Customers", icon: <HiOutlineUsers /> },
   { href: "/orders", label: "Orders", icon: <HiOutlineShoppingBag /> },
   { href: "/enquiries", label: "Enquiries", icon: <HiOutlineChatBubbleLeftRight /> },
