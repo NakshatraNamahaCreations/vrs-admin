@@ -267,7 +267,7 @@ export default function ProductsPage() {
             </div>
             <div className={styles.row2}>
               <label>
-                <span>Price (₹) <em style={{ color: "var(--muted)", fontStyle: "normal", fontWeight: 400 }}>(leave blank for &quot;on request&quot;)</em></span>
+                <span>Price (₹)</span>
                 <input type="number" min="0" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} />
               </label>
               <label>

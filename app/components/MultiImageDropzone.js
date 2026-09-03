@@ -14,9 +14,10 @@ const MAX_BYTES = 5 * 1024 * 1024; // 5MB per image
  * value    - string[] of stored URLs (e.g. "/uploads/foo.png" or full URLs)
  * onChange - (newArr) => void
  * disabled - disables interactions
- * max      - upper cap on how many images can be added (default 8)
+ * max      - optional upper cap on how many images can be added. Omit for
+ *            unlimited (default).
  */
-export default function MultiImageDropzone({ value = [], onChange, disabled, max = 8 }) {
+export default function MultiImageDropzone({ value = [], onChange, disabled, max }) {
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -24,7 +25,8 @@ export default function MultiImageDropzone({ value = [], onChange, disabled, max
   const [error, setError] = useState("");
 
   const list = Array.isArray(value) ? value : [];
-  const roomLeft = Math.max(0, max - list.length);
+  const hasCap = typeof max === "number" && max > 0;
+  const roomLeft = hasCap ? Math.max(0, max - list.length) : Infinity;
   const canAdd = !disabled && !uploading && roomLeft > 0;
 
   const resolvePreview = (url) => {
@@ -74,8 +76,8 @@ export default function MultiImageDropzone({ value = [], onChange, disabled, max
   const handleFiles = async (fileList) => {
     if (!fileList || fileList.length === 0) return;
     setError("");
-    // Trim to remaining slot count
-    const files = Array.from(fileList).slice(0, roomLeft);
+    // Trim to remaining slot count (only meaningful when a cap is set).
+    const files = hasCap ? Array.from(fileList).slice(0, roomLeft) : Array.from(fileList);
     if (files.length === 0) {
       setError(`You can only add up to ${max} images.`);
       return;
@@ -183,7 +185,7 @@ export default function MultiImageDropzone({ value = [], onChange, disabled, max
 
       <div className={styles.meta}>
         <span>
-          <HiOutlineCloudArrowUp /> PNG, JPG, WEBP · up to 5 MB each · {list.length}/{max}
+          <HiOutlineCloudArrowUp /> PNG, JPG, WEBP · up to 5 MB each · {hasCap ? `${list.length}/${max}` : `${list.length} added`}
         </span>
         {error && <span className={styles.error}>{error}</span>}
       </div>
