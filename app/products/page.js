@@ -97,7 +97,9 @@ export default function ProductsPage() {
     try {
       const payload = {
         ...form,
-        price: Number(form.price),
+        // Blank price → "on request" product; leave the field off the payload
+        // so it stays undefined in Mongo rather than being stored as 0/NaN.
+        price: form.price === "" || form.price == null ? undefined : Number(form.price),
         originalPrice: form.originalPrice ? Number(form.originalPrice) : undefined,
         stock: Number(form.stock),
         features: String(form.features || "")
@@ -194,7 +196,9 @@ export default function ProductsPage() {
                     </td>
                     <td>{p.category}</td>
                     <td>
-                      <b style={{ fontFamily: "var(--font-display)" }}>₹{p.price.toLocaleString("en-IN")}</b>
+                      <b style={{ fontFamily: "var(--font-display)" }}>
+                        {p.price != null ? `₹${p.price.toLocaleString("en-IN")}` : "On request"}
+                      </b>
                       {p.originalPrice && (
                         <em style={{ display: "block", color: "var(--muted)", textDecoration: "line-through", fontStyle: "normal", fontSize: 12 }}>
                           ₹{p.originalPrice.toLocaleString("en-IN")}
@@ -263,8 +267,8 @@ export default function ProductsPage() {
             </div>
             <div className={styles.row2}>
               <label>
-                <span>Price (₹)</span>
-                <input type="number" required min="0" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} />
+                <span>Price (₹) <em style={{ color: "var(--muted)", fontStyle: "normal", fontWeight: 400 }}>(leave blank for &quot;on request&quot;)</em></span>
+                <input type="number" min="0" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} />
               </label>
               <label>
                 <span>Original / MRP (₹)</span>
