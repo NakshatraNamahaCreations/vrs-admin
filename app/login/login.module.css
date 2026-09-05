@@ -105,6 +105,7 @@
 .inputWrap svg { color: var(--brand-500); font-size: 1.05rem; }
 .inputWrap input {
   flex: 1;
+  min-width: 0;
   padding: 13px 0;
   border: none;
   outline: none;
@@ -113,7 +114,52 @@
   font-size: 0.92rem;
   color: var(--ink);
 }
-.error { color: var(--danger); font-size: 0.82rem; font-weight: 600; }
+.reveal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.05rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+  margin-right: -4px;
+}
+.reveal:hover { background: rgba(15, 127, 191, 0.08); color: var(--brand-700); }
+.reveal svg { display: block; }
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(224, 82, 82, 0.08);
+  border: 1px solid rgba(224, 82, 82, 0.25);
+  border-radius: 10px;
+  color: var(--danger);
+  font-size: 0.83rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.error::before {
+  content: "!";
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+}
 
 .submit {
   display: inline-flex;

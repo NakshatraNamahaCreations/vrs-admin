@@ -45,8 +45,11 @@ export async function api(path, options = {}) {
   if (!res.ok) {
     const error = new Error(data.error || `Request failed (${res.status})`);
     error.status = res.status;
-    if (res.status === 401 && typeof window !== "undefined") {
-      // Session expired — bounce to login
+    // Only treat 401 as a session expiry when we actually sent a token that
+    // got rejected. A 401 on the login endpoint itself (no token attached)
+    // is just "wrong credentials" — it must propagate as a normal error so
+    // the UI can show the message instead of auto-redirecting.
+    if (res.status === 401 && token && typeof window !== "undefined") {
       setToken(null);
       localStorage.removeItem("vrs_admin");
       window.location.href = "/login";

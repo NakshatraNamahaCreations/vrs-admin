@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { HiOutlineEnvelope, HiOutlineLockClosed, HiArrowRight } from "react-icons/hi2";
+import { HiOutlineEnvelope, HiOutlineLockClosed, HiArrowRight, HiOutlineEye, HiOutlineEyeSlash } from "react-icons/hi2";
 import { login, useAdmin } from "../lib/auth";
 import styles from "./login.module.css";
 
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const { isLoggedIn, ready } = useAdmin();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -26,7 +27,15 @@ export default function LoginPage() {
       await login(email.trim(), password);
       router.replace("/dashboard");
     } catch (err) {
-      setError(err.message || "Login failed");
+      // Normalize the couple of shapes the backend / network layer might
+      // return into one clear message shown next to the form.
+      if (err.status === 401) {
+        setError("Incorrect email or password. Please try again.");
+      } else if (err.status === 400) {
+        setError(err.message || "Please enter your email and password.");
+      } else {
+        setError(err.message || "Couldn't sign you in. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -68,12 +77,21 @@ export default function LoginPage() {
             <div className={styles.inputWrap}>
               <HiOutlineLockClosed />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
               />
+              <button
+                type="button"
+                className={styles.reveal}
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                tabIndex={-1}
+              >
+                {showPassword ? <HiOutlineEyeSlash /> : <HiOutlineEye />}
+              </button>
             </div>
           </label>
 
